@@ -539,7 +539,7 @@
     const phone = document.getElementById('fphone').value;
     const total = calcTotal().toFixed(2);
 
-    let msg = `Assalamualaikum ROC, saya nak tempah Project FTR Jersey.%0A%0A`;
+    let msg = `Assalamualaikum/Hi ROC, saya nak tempah Project FTR Jersey.%0A%0A`;
     msg += `Nama: ${nama}%0A`;
     msg += `Saiz: ${saiz}%0A`;
     msg += `Kuantiti: ${qty} helai%0A`;
@@ -548,7 +548,7 @@
       msg += `Alamat: ${addr}%0A`;
     }
     msg += `No. Telefon: ${phone}%0A`;
-    msg += `Anggaran Jumlah: RM ${total}%0A%0A`;
+    msg += `Jumlah Jersi: RM ${total}%0A%0A`;
     msg += `Sila sahkan tempahan saya. Terima kasih!`;
 
     const waLink = `https://wa.me/${ROC_WHATSAPP_NUMBER}?text=${msg}`;
