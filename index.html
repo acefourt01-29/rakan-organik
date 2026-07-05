@@ -504,18 +504,31 @@
 
   const ROC_WHATSAPP_NUMBER = "60132218468";
 
+Berikut adalah kod lengkap yang telah digabungkan sekali dengan fungsi `updatePriceEstimate` serta `addEventListener` supaya harga bertukar secara automatik apabila pengguna menukar saiz, kuantiti, atau pilihan penghantaran:
+
+```javascript
   function calcTotal(){
     const sizeEl = document.getElementById('fsize');
     const qtyEl = document.getElementById('fqty');
+    const deliveryEl = document.getElementById('fdelivery'); // Elemen penghantaran yang ditambah
+    
     const size = sizeEl.value;
+    const delivery = deliveryEl ? deliveryEl.value : ''; 
+    
     let qty = parseInt(qtyEl.value, 10);
     if(!qty || qty < 1){ qty = 1; }
 
     const perHelai = (qty === 1) ? 49.00 : 45.00;
     let total = perHelai * qty;
 
+    // Tambahan RM5 bagi setiap helai saiz besar
     const isBigSize = size.includes('3XL') || size.includes('4XL') || size.includes('5XL');
     if(isBigSize){ total += 5.00 * qty; }
+
+    // Tambahan kos kurier jika bukan Self-Collect
+    if(delivery.includes('Kurier') || delivery.includes('Semenanjung')){
+      total += 10.00; // Anda boleh tukar nilai RM10.00 ini mengikut kadar sebenar
+    }
 
     return total;
   }
@@ -527,6 +540,12 @@
 
   document.getElementById('fsize').addEventListener('change', updatePriceEstimate);
   document.getElementById('fqty').addEventListener('input', updatePriceEstimate);
+  
+  const deliveryEl = document.getElementById('fdelivery');
+  if(deliveryEl){
+    deliveryEl.addEventListener('change', updatePriceEstimate);
+  }
+
   updatePriceEstimate();
 
   document.getElementById('orderForm').addEventListener('submit', function(e){
