@@ -387,7 +387,7 @@
     </div>
 
     <div class="product-group" id="groupReady">
-      <div class="group-head"><h3>Ready Stock</h3><p>Stok terhad. Saiz dan baki seperti dipaparkan.</p></div>
+      <div class="group-head"><h3>Ready Stock</h3><p>Stok sedia ada. Terhad.</p></div>
       <div class="product-grid" id="gridReady"></div>
     </div>
 
@@ -607,10 +607,11 @@
     price: 49.00,
     unit: "helai",
     desc: "Project: Finish The Route. Kain Ultron 115GSM Premium. Lengan pendek sahaja.",
-    note: "Stok terhad. Saiz tersedia seperti di bawah sahaja.",
+    note: "Stok terhad.",
     promo: "Combo: Project FTR + ROC Running Cap = RM120 / set.",
     variantLabel: "Saiz",
-    stock: { "S": 2, "XL": 1 },   // <-- ubah bilangan stok di sini bila ada yang terjual
+    stock: { "S": 2, "XL": 1 },   // had tempahan ikut saiz (tidak dipaparkan). Ubah bilangan di sini bila ada yang terjual
+    hideStock: true,
     variants: ["S", "XL"],
     surcharge: {},
     light: true,
@@ -624,7 +625,10 @@
   PRODUCTS.push({
     id: "roc-running-cap",
     name: "ROC Running Cap (Cream)",
-    tag: "Pre Order",
+    tag: "Ready Stock",
+    group: "ready",
+    stock: 11,   // had tempahan (tidak dipaparkan kepada pelanggan). Ubah nombor ini bila ada yang terjual
+    hideStock: true,   // sorok paparan 'Baki stok' pada kad; had masih dikuatkuasakan
     price: 75.00,
     unit: "biji",
     desc: "Warna: Cream.",
@@ -655,7 +659,11 @@
 
   const cart = []; // { pid, variant, qty }
   // had stok (jika product ada 'stock')
-  function stockOf(p, v) { return p.stock ? (p.stock[v] || 0) : Infinity; }
+  // stock: nombor (product tanpa saiz, cth 11) ATAU { "S": 2, "XL": 1 } (ikut saiz). Tiada 'stock' = tanpa had.
+  function stockOf(p, v) {
+    if (p.stock == null) return Infinity;
+    return typeof p.stock === 'number' ? p.stock : (p.stock[v] || 0);
+  }
   function inCart(pid, v) { return cart.filter(c => c.pid === pid && c.variant === v).reduce((s, c) => s + c.qty, 0); }
   const rm2 = n => "RM" + n.toFixed(2);
   const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -672,7 +680,7 @@
     const dots = multi ? `<div class="dots">${p.images.map((_, i) => `<span class="dot${i === 0 ? ' on' : ''}"></span>`).join('')}</div>` : '';
     const arrows = multi ? `<button type="button" class="sl-btn sl-prev" aria-label="Gambar sebelum">‹</button><button type="button" class="sl-btn sl-next" aria-label="Gambar seterusnya">›</button>` : '';
     const hasVar = p.variants && p.variants.length;
-    const opts = hasVar ? p.variants.map(v => { const f = (p.surcharge || {})[v]; return `<option value="${esc(v)}"${v === (p.variants.includes('M') ? 'M' : p.variants[0]) ? ' selected' : ''}>${esc(v)}${p.stock ? ` (baki ${p.stock[v]})` : ''}${f ? ` (+RM${f}/${esc(p.unit)})` : ''}</option>`; }).join('') : '';
+    const opts = hasVar ? p.variants.map(v => { const f = (p.surcharge || {})[v]; return `<option value="${esc(v)}"${v === (p.variants.includes('M') ? 'M' : p.variants[0]) ? ' selected' : ''}>${esc(v)}${p.stock != null && typeof p.stock === 'object' && !p.hideStock ? ` (baki ${p.stock[v]})` : ''}${f ? ` (+RM${f}/${esc(p.unit)})` : ''}</option>`; }).join('') : '';
     const chart = p.sizeChart ? `<details class="chart"><summary>Lihat Carta Saiz</summary>
         <div class="size-chart"><table class="sizes sm"><thead><tr>${p.sizeChart.cols.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${p.sizeChart.rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
         ${p.sizeChart.note ? `<p class="p-note" style="margin-top:10px;">${esc(p.sizeChart.note)}</p>` : ''}</details>` : '';
@@ -688,7 +696,7 @@
         ${p.desc ? `<p class="p-desc">${esc(p.desc)}</p>` : ''}
         ${p.note ? `<p class="p-note">${esc(p.note)}</p>` : ''}
         ${p.promo ? `<p class="p-note" style="color:var(--ink);">★ ${esc(p.promo)}</p>` : ''}
-        ${p.stock ? `<p class="p-note" style="color:var(--ink);">Baki stok: ${Object.entries(p.stock).map(([k, n]) => `${esc(k)} × ${n}`).join(' · ')}</p>` : ''}
+        ${p.stock != null && !p.hideStock ? `<p class="p-note" style="color:var(--ink);">Baki stok: ${typeof p.stock === 'number' ? `${p.stock} ${esc(p.unit)}` : Object.entries(p.stock).map(([k, n]) => `${esc(k)} × ${n}`).join(' · ')}</p>` : ''}
         ${chart}
         <div class="p-actions${hasVar ? '' : ' no-variant'}">
           ${hasVar ? `<select class="sel-variant" aria-label="${esc(p.variantLabel || 'Pilihan')}">${opts}</select>` : ''}
@@ -698,9 +706,10 @@
       </div>`;
     (p.group === 'ready' ? gridReady : gridPre).appendChild(card);   // group: 'ready' = Ready Stock, lain-lain = Pre Order
     const vSel = card.querySelector('.sel-variant'), qInp = card.querySelector('.sel-qty');
-    if (p.stock && vSel) {
-      const sync = () => { qInp.max = stockOf(p, vSel.value); };
-      vSel.addEventListener('change', sync); sync();
+    if (p.stock != null) {
+      const sync = () => { qInp.max = stockOf(p, vSel ? vSel.value : ''); };
+      if (vSel) vSel.addEventListener('change', sync);
+      sync();
     }
 
     // slider
@@ -727,9 +736,9 @@
       let qty = parseInt(card.querySelector('.sel-qty').value, 10);
       if (!qty || qty < 1) qty = 1;
       const left = stockOf(p, variant) - inCart(p.id, variant);
-      if (left <= 0) { showToast(`Stok saiz ${variant} sudah habis`); return; }
+      if (left <= 0) { showToast(variant ? `Stok saiz ${variant} sudah habis` : `Stok ${p.name} sudah habis`); return; }
       let extra = '';
-      if (qty > left) { qty = left; extra = ` (baki stok ${left} sahaja)`; }
+      if (qty > left) { qty = left; extra = p.hideStock ? ' (stok terhad, kuantiti dihadkan)' : ` (baki stok ${left} sahaja)`; }
       const found = cart.find(c => c.pid === p.id && c.variant === variant);
       if (found) found.qty += qty; else cart.push({ pid: p.id, variant, qty });
       card.querySelector('.sel-qty').value = 1;
