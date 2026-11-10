@@ -479,13 +479,13 @@
     </div>
     <div class="trip-grid">
       <div class="trip-card">
-        <span class="tag mono">Trip Seterusnya</span>
-        <h3>Gunung Ledang</h3>
+        <span class="tag mono" id="tripTag">Trip Seterusnya</span>
+        <h3>Bukit Beruang</h3>
         <div class="hud">
-          <div class="cell"><span class="k">Tarikh</span><span class="v">8/11/2026</span></div>
-          <div class="cell"><span class="k">Status</span><span class="v">Akan Datang</span></div>
+          <div class="cell"><span class="k">Tarikh</span><span class="v" id="tripDate" data-date="2026-11-08">8/11/2026</span></div>
+          <div class="cell"><span class="k">Status</span><span class="v" id="tripStatus">Akan Datang</span></div>
         </div>
-        <p class="desc">Pendakian Gunung Ledang bersama komuniti ROC. Hubungi kami melalui WhatsApp untuk tempahan slot &amp; butiran lanjut.</p>
+        <p class="desc">Pendakian Bukit Beruang bersama komuniti ROC. Hubungi kami melalui WhatsApp untuk tempahan slot &amp; butiran lanjut.</p>
       </div>
       <div class="trip-follow">
         <h3>Nak jadi yang pertama tahu?</h3>
@@ -886,6 +886,27 @@
 
     window.open(`https://wa.me/${ROC_WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
   });
+</script>
+
+
+<script>
+  /* Status trip auto-kemas kini mengikut tarikh semasa (waktu Malaysia).
+     Tukar data-date="YYYY-MM-DD" pada #tripDate bila ada trip baharu. */
+  (function(){
+    const d = document.getElementById('tripDate');
+    const st = document.getElementById('tripStatus');
+    const tag = document.getElementById('tripTag');
+    if (!d || !st) return;
+    const myToday = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kuala_Lumpur' });
+    const diff = Math.round((new Date(d.dataset.date) - new Date(myToday)) / 86400000);
+    if (diff > 1) st.textContent = 'Akan Datang · ' + diff + ' hari lagi';
+    else if (diff === 1) st.textContent = 'Esok';
+    else if (diff === 0) st.textContent = 'Hari Ini';
+    else {
+      st.textContent = 'Telah Selesai';
+      if (tag) tag.textContent = 'Trip Terakhir';
+    }
+  })();
 </script>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
