@@ -284,7 +284,8 @@
 
   /* ================= ACTIVITIES ================= */
   .activities{padding:110px 0;}
-  .trip-grid{display:grid; grid-template-columns:1fr 1fr; gap:2px; background:var(--line-on-dark); border:1px solid var(--line-on-dark);}
+  .trip-grid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:24px;}
+  .trip-card, .trip-follow{border:1px solid var(--line-on-dark);}
   .trip-card{background:var(--bg); padding:30px 28px 26px;}
   .trip-card .tag{color:var(--gray); font-size:0.68rem; display:block; margin-bottom:10px;}
   .trip-card h3{font-size:1.3rem; margin-bottom:16px;}
@@ -478,15 +479,7 @@
       <p>Trip &amp; aktiviti komuniti Rakan Organik Club. Kekal ikuti untuk pengumuman terbaharu.</p>
     </div>
     <div class="trip-grid">
-      <div class="trip-card">
-        <span class="tag mono" id="tripTag">Trip Seterusnya</span>
-        <h3>Bukit Beruang</h3>
-        <div class="hud">
-          <div class="cell"><span class="k">Tarikh</span><span class="v" id="tripDate" data-date="2026-11-08">8/11/2026</span></div>
-          <div class="cell"><span class="k">Status</span><span class="v" id="tripStatus">Akan Datang</span></div>
-        </div>
-        <p class="desc">Pendakian Bukit Beruang bersama komuniti ROC. Hubungi kami melalui WhatsApp untuk tempahan slot &amp; butiran lanjut.</p>
-      </div>
+      <div id="activityList" style="display:contents;"></div>
       <div class="trip-follow">
         <h3>Nak jadi yang pertama tahu?</h3>
         <p>Ikuti Instagram &amp; TikTok ROC — setiap trip diumumkan di sana dahulu sebelum slot dibuka kat sini.</p>
@@ -752,6 +745,48 @@
     if (!document.getElementById(c).children.length) document.getElementById(g).style.display = 'none';
   });
 
+
+  /* =====================================================
+     SENARAI AKTIVITI — tambah / ubah di sini.
+     status : (pilihan) cth "Slot Dibuka" / "Slot Penuh". Kosong = "Akan Datang".
+     start / end : format 'TAHUN-BULAN-HARI'. Aktiviti yang dah
+     lepas (selepas tarikh 'end') akan hilang sendiri dari halaman.
+     ===================================================== */
+  const ACTIVITIES = [
+    { tag: "Nov 2026", name: "Route Dinasour Putrajaya", start: "2026-11-15", end: "2026-11-15", desc: "Aktiviti komuniti ROC. Hubungi kami melalui WhatsApp untuk butiran & slot." },
+    { tag: "Nov 2026", name: "UiTM Ultra Simulation", start: "2026-11-28", end: "2026-11-28", desc: "Sesi simulasi UiTM Ultra bersama komuniti ROC. Hubungi kami melalui WhatsApp untuk butiran & slot." },
+    { tag: "Dis 2026", name: "Bukit Dinding Via Tarmac", start: "2026-12-06", end: "2026-12-06", format: "3–5 Loop", desc: "Compress 3–5 loop — bilangan loop terpulang kepada individu ikut kemampuan masing-masing." },
+    { tag: "Dis 2026", name: "Long Run Putrajaya", start: "2026-12-26", end: "2026-12-26", desc: "Aktiviti long run bersama komuniti ROC. Hubungi kami melalui WhatsApp untuk butiran & slot." },
+    { tag: "Jan 2027", name: "Event UiTM Ultra Vol.9 🏁", start: "2027-01-08", end: "2027-01-10", desc: "Acara besar UiTM Ultra Vol.9. Hubungi kami melalui WhatsApp untuk butiran lanjut." }
+  ];
+
+  (function renderActivities() {
+    const HARI = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
+    const toDate = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const list = ACTIVITIES.filter(a => toDate(a.end) >= today).sort((a, b) => toDate(a.start) - toDate(b.start));
+    const box = document.getElementById('activityList');
+    if (!list.length) {
+      box.innerHTML = '<div class="trip-card"><span class="tag mono">Akan Datang</span><h3>Belum Ada Jadual</h3><p class="desc">Tiada aktiviti dijadualkan buat masa ini. Ikuti Instagram &amp; TikTok ROC untuk pengumuman terbaharu.</p></div>';
+      return;
+    }
+    box.innerHTML = list.map(a => {
+      const s = toDate(a.start), e = toDate(a.end), range = a.start !== a.end;
+      const tarikh = range ? `${s.getDate()}–${e.getDate()}/${e.getMonth() + 1}/${e.getFullYear()}` : `${s.getDate()}/${s.getMonth() + 1}/${s.getFullYear()}`;
+      const hari = range ? `${HARI[s.getDay()]} – ${HARI[e.getDay()]}` : HARI[s.getDay()];
+      return `<div class="trip-card">
+        <span class="tag mono">${esc(a.tag)}</span>
+        <h3>${esc(a.name)}</h3>
+        <div class="hud">
+          <div class="cell"><span class="k">Tarikh</span><span class="v">${tarikh} (${hari})</span></div>
+          <div class="cell"><span class="k">Status</span><span class="v">${esc(a.status || 'Akan Datang')}</span></div>
+          ${a.format ? `<div class="cell"><span class="k">Format</span><span class="v">${esc(a.format)}</span></div>` : ''}
+        </div>
+        <p class="desc">${esc(a.desc)}</p>
+      </div>`;
+    }).join('');
+  })();
+
   let toastTimer;
   function showToast(msg) {
     const t = document.getElementById('toast');
@@ -886,27 +921,6 @@
 
     window.open(`https://wa.me/${ROC_WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
   });
-</script>
-
-
-<script>
-  /* Status trip auto-kemas kini mengikut tarikh semasa (waktu Malaysia).
-     Tukar data-date="YYYY-MM-DD" pada #tripDate bila ada trip baharu. */
-  (function(){
-    const d = document.getElementById('tripDate');
-    const st = document.getElementById('tripStatus');
-    const tag = document.getElementById('tripTag');
-    if (!d || !st) return;
-    const myToday = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kuala_Lumpur' });
-    const diff = Math.round((new Date(d.dataset.date) - new Date(myToday)) / 86400000);
-    if (diff > 1) st.textContent = 'Akan Datang · ' + diff + ' hari lagi';
-    else if (diff === 1) st.textContent = 'Esok';
-    else if (diff === 0) st.textContent = 'Hari Ini';
-    else {
-      st.textContent = 'Telah Selesai';
-      if (tag) tag.textContent = 'Trip Terakhir';
-    }
-  })();
 </script>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
